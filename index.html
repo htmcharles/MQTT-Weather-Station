@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/moment"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -63,18 +64,29 @@
         <canvas id="chart"></canvas>
     </div>
     <script>
-        let lastTemp = null;
-        let lastHumidity = null;
-        // Real-time data updates every time new data is received
-        function updateLatestData() {
-            fetch("http://localhost:3000/latest")
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("temp").innerText = data.temperature !== null ? data.temperature : "--";
-                    document.getElementById("humidity").innerText = data.humidity !== null ? data.humidity : "--";
-                })
-                .catch(error => console.error("Error fetching latest data:", error));
-        }
+        // Initialize the MQTT connection
+        const mqttClient = mqtt.connect('ws://157.173.101.159:9001');
+
+        mqttClient.on('connect', () => {
+            console.log("Connected to MQTT via WebSockets");
+            mqttClient.subscribe("/work_group_01/room_temp/temperature");
+            mqttClient.subscribe("/work_group_01/room_temp/humidity");
+        });
+
+        mqttClient.on('message', (topic, message) => {
+            console.log(`Received: ${topic} → ${message.toString()}`);
+
+            if (topic === "/work_group_01/room_temp/temperature") {
+                document.getElementById("temp").innerText = message.toString();
+            } else if (topic === "/work_group_01/room_temp/humidity") {
+                document.getElementById("humidity").innerText = message.toString();
+            }
+        });
+
+        mqttClient.on('error', (error) => {
+            console.error('MQTT Connection Error:', error);
+        });
+
         // Initialize the chart
         const ctx = document.getElementById('chart').getContext('2d');
         const chart = new Chart(ctx, {
@@ -319,22 +331,28 @@
                         }
                     });
 
-                    chart.update(); // Update the graph with the latest data
-
-                    // Update last known data with the most recent point
-                    if (data.length > 0) {
-                        const latestPoint = data[data.length - 1];
-                        lastTemp = latestPoint.temperature;
-                        lastHumidity = latestPoint.humidity;
+                    // Add the latest real-time point if available
+                    if (lastTemp !== null && lastHumidity !== null) {
+                        const now = new Date();
+                        chart.data.labels.push(now);
+                        chart.data.datasets[0].data.push({
+                            x: now,
+                            y: lastTemp
+                        });
+                        chart.data.datasets[1].data.push({
+                            x: now,
+                            y: lastHumidity
+                        });
                     }
+
+                    chart.update();
                 })
                 .catch(error => console.error("Error fetching graph data:", error));
         }
         // Set intervals
-        setInterval(updateLatestData, 2000); // Fetch latest data every 2 seconds for real-time updates
         setInterval(fetchGraphData, 300000); // Fetch and update graph data every 5 minutes
+
         // Initial fetch
-        updateLatestData(); // To fetch the latest data immediately
         fetchInitialGraphData(); // To fetch and display the historical data initially
     </script>
 </body>
