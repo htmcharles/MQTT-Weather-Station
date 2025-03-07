@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Station (MQTT WebSockets)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        .container { width: 300px; margin: auto; padding: 20px; border: 2px solid #007BFF; border-radius: 10px; background: #f4f4f4; }
+        h2 { color: #007BFF; }
+        .data { font-size: 24px; font-weight: bold; color: #333; }
+        canvas { max-width: 600px; margin: 20px auto; display: block; }
+    </style>
+</head>
+<body>
+    <h2>MQTT Weather Station</h2>
+    <div class="container">
+        <p>Temperature: <span id="temp" class="data">--</span> °C</p>
+        <p>Humidity: <span id="humidity" class="data">--</span> %</p>
+    </div>
+
+    <canvas id="chart"></canvas>
+
+    <script>
+        const mqttClient = mqtt.connect('ws://157.173.101.159:9001');
+
+        mqttClient.on('connect', () => {
+            console.log("Connected to MQTT via WebSockets");
+            mqttClient.subscribe("/work_group_01/room_temp/temperature");
+            mqttClient.subscribe("/work_group_01/room_temp/humidity");
+        });
+
+        mqttClient.on('message', (topic, message) => {
+            const data = message.toString();
+            console.log(`Received: ${topic} → ${data}`);
+
+            if (topic === "/work_group_01/room_temp/temperature") {
+                document.getElementById("temp").innerText = data;
+                sendDataToServer("temperature", data);
+            } else if (topic === "/work_group_01/room_temp/humidity") {
+                document.getElementById("humidity").innerText = data;
+                sendDataToServer("humidity", data);
+            }
+        });
+
+        function sendDataToServer(type, value) {
+            fetch('http://localhost:3000/store', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, value })
+            });
+        }
+
+        const ctx = document.getElementById("chart").getContext("2d");
+        const chart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: [
+                    { label: "Temperature (°C)", data: [], borderColor: "red", fill: false },
+                    { label: "Humidity (%)", data: [], borderColor: "blue", fill: false }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: "time",
+                        time: {
+                            unit: "second",
+                            stepSize: 10, // 10 seconds interval
+                            tooltipFormat: 'll HH:mm:ss',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Value'
+                        }
+                    }
+                }
+            }
+        });
+
+        function fetchData() {
+            fetch("http://localhost:3000/data")
+                .then(response => response.json())
+                .then(data => {
+                    chart.data.labels = data.map(d => new Date(d.time_group));
+                    chart.data.datasets[0].data = data.map(d => d.temperature);
+                    chart.data.datasets[1].data = data.map(d => d.humidity);
+                    chart.update();
+                });
+        }
+
+        setInterval(fetchData, 10000); // Update every 10 seconds
+        fetchData();
+    </script>
+</body>
+</html>
