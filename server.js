@@ -1,53 +1,84 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
+const mqtt = require("mqtt");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 
 const app = express();
-const db = new sqlite3.Database("weather.db");
-
 app.use(cors());
-app.use(bodyParser.json());
 
-db.serialize(() => {
-    db.run(`
-        CREATE TABLE IF NOT EXISTS weather (
-            id INTEGER PRIMARY KEY,
-            type TEXT,
-            value REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    `);
+// Initialize SQLite
+const db = new sqlite3.Database("database.db", (err) => {
+    if (err) console.error(err.message);
+    console.log("Connected to SQLite database.");
 });
 
-// Store sensor data
-app.post("/store", (req, res) => {
-    const { type, value } = req.body;
-    db.run(
-        "INSERT INTO weather (type, value) VALUES (?, ?)",
-        [type, value],
-        (err) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.status(200).json({ success: true });
+// Create Table (if not exists)
+db.run(`
+    CREATE TABLE IF NOT EXISTS sensor_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        temperature REAL,
+        humidity REAL
+    )
+`);
+
+// MQTT Connection
+const mqttClient = mqtt.connect("ws://157.173.101.159:9001");
+let latestData = { temperature: null, humidity: null };
+
+mqttClient.on("connect", () => {
+    console.log("Connected to MQTT");
+    mqttClient.subscribe("/work_group_01/room_temp/temperature");
+    mqttClient.subscribe("/work_group_01/room_temp/humidity");
+});
+
+mqttClient.on("message", (topic, message) => {
+    const value = parseFloat(message.toString());
+
+    if (topic === "/work_group_01/room_temp/temperature") {
+        latestData.temperature = value;
+    } else if (topic === "/work_group_01/room_temp/humidity") {
+        latestData.humidity = value;
+    }
+
+    if (latestData.temperature !== null && latestData.humidity !== null) {
+        db.run(
+            `INSERT INTO sensor_data (temperature, humidity) VALUES (?, ?)`,
+            [latestData.temperature, latestData.humidity],
+            (err) => {
+                if (err) console.error(err.message);
+            }
+        );
+    }
+});
+
+// API to get latest temperature & humidity
+app.get("/latest", (req, res) => {
+    db.get(`SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 1`, (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(row || { temperature: "--", humidity: "--" });
+    });
+});
+
+// API to get last 1 hour of data for graph
+app.get("/data", (req, res) => {
+    db.all(
+        `SELECT * FROM sensor_data WHERE timestamp >= datetime('now', '-1 hour')`,
+        (err, rows) => {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json(rows);
         }
     );
 });
 
-// Retrieve data grouped in 10-second intervals
-app.get("/data", (req, res) => {
-    db.all(`
-        SELECT
-            strftime('%Y-%m-%d %H:%M:%S', timestamp) AS time_group,
-            AVG(CASE WHEN type='temperature' THEN value END) AS temperature,
-            AVG(CASE WHEN type='humidity' THEN value END) AS humidity
-        FROM weather
-        GROUP BY strftime('%s', timestamp) / 10
-        ORDER BY time_group DESC
-        LIMIT 50
-    `, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+// Start Server
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
-
-app.listen(3000, () => console.log("Server running on port 3000"));

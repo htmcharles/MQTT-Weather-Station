@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Station (Real-Time)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border: 2px solid #007BFF;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #007BFF;
+        }
+        .data {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+        .chart-container {
+            width: 90%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+    </style>
+</head>
+<body>
+    <h2>Real-Time Weather Station</h2>
+    <div class="container">
+        <p>Temperature: <span id="temp" class="data">--</span> °C</p>
+        <p>Humidity: <span id="humidity" class="data">--</span> %</p>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="chart"></canvas>
+    </div>
+
+    <script>
+        let lastTemp = null;
+        let lastHumidity = null;
+        const timeIntervals = [];  // Array to hold the time intervals (e.g., [current_time, current_time-5, ..., current_time-50])
+        const tempData = []; // Array to hold temperature data
+        const humidityData = []; // Array to hold humidity data
+
+        function updateLatestData() {
+            fetch("http://localhost:3000/latest")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("temp").innerText = data.temperature !== null ? data.temperature : "--";
+                    document.getElementById("humidity").innerText = data.humidity !== null ? data.humidity : "--";
+                })
+                .catch(error => console.error("Error fetching latest data:", error));
+        }
+
+        const ctx = document.getElementById('chart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeIntervals,
+                datasets: [
+                    {
+                        label: "Temperature (°C)",
+                        borderColor: "#FF5733",
+                        backgroundColor: "rgba(255, 87, 51, 0.2)",
+                        data: tempData,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    },
+                    {
+                        label: "Humidity (%)",
+                        borderColor: "#3498db",
+                        backgroundColor: "rgba(52, 152, 219, 0.2)",
+                        data: humidityData,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute',
+                            stepSize: 5,  // Show ticks every 5 minutes
+                            displayFormats: {
+                                minute: 'HH:mm'
+                            }
+                        },
+                        title: { display: true, text: "Time" },
+                        grid: { color: "rgba(0,0,0,0.1)" },
+                        ticks: {
+                            source: 'auto',
+                            autoSkip: false,
+                            maxRotation: 45
+                        },
+                        min: function() {
+                            const firstTime = timeIntervals[0];
+                            return firstTime;
+                        }(),
+                        max: function() {
+                            const lastTime = timeIntervals[timeIntervals.length - 1];
+                            return lastTime;
+                        }()
+                    },
+                    y: {
+                        beginAtZero: false,
+                        title: { display: true, text: "Value" },
+                        grid: { color: "rgba(0,0,0,0.1)" }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            font: { size: 14 }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 0
+                }
+            }
+        });
+
+        function fetchGraphData() {
+            fetch("http://localhost:3000/data")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) return;
+
+                    const latestEntry = data[data.length - 1];
+                    const currentTime = new Date();
+
+                    // Round current time to nearest 5 minutes
+                    currentTime.setMilliseconds(0);
+                    currentTime.setSeconds(0);
+                    currentTime.setMinutes(Math.round(currentTime.getMinutes() / 5) * 5);
+
+                    // If this is the first data point or data has changed
+                    if (timeIntervals.length === 0 ||
+                        latestEntry.temperature !== lastTemp ||
+                        latestEntry.humidity !== lastHumidity ||
+                        (currentTime - timeIntervals[timeIntervals.length - 1]) >= 300000) { // 5 minutes = 300000ms
+
+                        // Add the new data point
+                        timeIntervals.push(currentTime);
+                        tempData.push(latestEntry.temperature);
+                        humidityData.push(latestEntry.humidity);
+
+                        // Keep track of last values
+                        lastTemp = latestEntry.temperature;
+                        lastHumidity = latestEntry.humidity;
+
+                        // Keep the last 24 data points (2 hours of history with 5-minute intervals)
+                        if (timeIntervals.length > 24) {
+                            timeIntervals.shift();
+                            tempData.shift();
+                            humidityData.shift();
+                        }
+
+                        // Ensure we have at least 10 points by duplicating the last known values if needed
+                        while (timeIntervals.length < 10) {
+                            const newTime = new Date(currentTime.getTime() - (timeIntervals.length * 300000)); // 5 minutes in milliseconds
+                            timeIntervals.unshift(newTime);
+                            tempData.unshift(latestEntry.temperature);
+                            humidityData.unshift(latestEntry.humidity);
+                        }
+
+                        // Update the x-axis min and max
+                        chart.options.scales.x.min = timeIntervals[0];
+                        chart.options.scales.x.max = timeIntervals[timeIntervals.length - 1];
+
+                        chart.update();
+                    }
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+
+        // Update less frequently since we're tracking 5-minute intervals
+        setInterval(updateLatestData, 30000); // Check every 30 seconds
+        setInterval(fetchGraphData, 30000);  // Check every 30 seconds
+
+        // Initialize the data
+        updateLatestData();
+        fetchGraphData();
+    </script>
+</body>
+</html>
