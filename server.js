@@ -7,14 +7,14 @@ const app = express();
 app.use(cors());
 
 // Initialize SQLite
-const db = new sqlite3.Database("database.db", (err) => {
+const db = new sqlite3.Database("weather_station.db", (err) => {
     if (err) console.error(err.message);
     console.log("Connected to SQLite database.");
 });
 
 // Create Table (if not exists)
 db.run(`
-    CREATE TABLE IF NOT EXISTS sensor_data (
+    CREATE TABLE IF NOT EXISTS weather_measurements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
         temperature REAL,
@@ -43,7 +43,7 @@ mqttClient.on("message", (topic, message) => {
 
     if (latestData.temperature !== null && latestData.humidity !== null) {
         db.run(
-            `INSERT INTO sensor_data (temperature, humidity) VALUES (?, ?)`,
+            `INSERT INTO weather_measurements (temperature, humidity) VALUES (?, ?)`,
             [latestData.temperature, latestData.humidity],
             (err) => {
                 if (err) console.error(err.message);
@@ -54,7 +54,7 @@ mqttClient.on("message", (topic, message) => {
 
 // API to get latest temperature & humidity
 app.get("/latest", (req, res) => {
-    db.get(`SELECT * FROM sensor_data ORDER BY timestamp DESC LIMIT 1`, (err, row) => {
+    db.get(`SELECT * FROM weather_measurements ORDER BY timestamp DESC LIMIT 1`, (err, row) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
@@ -70,7 +70,7 @@ app.get("/data", (req, res) => {
             strftime('%Y-%m-%d %H:%M:00', datetime(timestamp, 'localtime')) as timestamp,
             ROUND(AVG(temperature), 1) as temperature,
             ROUND(AVG(humidity), 1) as humidity
-        FROM sensor_data
+        FROM weather_measurements
         WHERE timestamp >= datetime('now', '-1 hour')
         GROUP BY strftime('%Y-%m-%d %H:%M:00', datetime(timestamp, 'localtime'))
         ORDER BY timestamp DESC`,

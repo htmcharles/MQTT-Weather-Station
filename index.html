@@ -11,7 +11,7 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f8f9fa;
+            background-color: #F8F9FA;
             padding: 20px;
         }
         .container {
@@ -20,7 +20,7 @@
             padding: 20px;
             border: 2px solid #007BFF;
             border-radius: 10px;
-            background: #ffffff;
+            background: #FFFFFF;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
         h2 {
@@ -35,14 +35,21 @@
             width: 90%;
             max-width: 900px;
             margin: 20px auto;
-            padding: 15px;
+            padding: 20px;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e0e0e0;
         }
         canvas {
             width: 100% !important;
             height: 400px !important;
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+        /* Add specific styles for the chart legend and tooltips */
+        #chart {
+            font-family: 'Arial', sans-serif;
         }
     </style>
 </head>
@@ -58,7 +65,7 @@
     <script>
         let lastTemp = null;
         let lastHumidity = null;
-
+        // Real-time data updates every time new data is received
         function updateLatestData() {
             fetch("http://localhost:3000/latest")
                 .then(response => response.json())
@@ -68,7 +75,7 @@
                 })
                 .catch(error => console.error("Error fetching latest data:", error));
         }
-
+        // Initialize the chart
         const ctx = document.getElementById('chart').getContext('2d');
         const chart = new Chart(ctx, {
             type: 'line',
@@ -77,31 +84,31 @@
                 datasets: [
                     {
                         label: "Temperature (°C)",
-                        borderColor: "#FF6B6B",
-                        backgroundColor: "rgba(255, 107, 107, 0.1)",
+                        borderColor: "#FF6384",
+                        backgroundColor: "rgba(255, 99, 132, 0.1)",
                         data: [],
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 2,
-                        borderWidth: 1,
-                        pointBackgroundColor: "#FF6B6B",
-                        pointBorderColor: "#FF6B6B",
-                        pointBorderWidth: 0
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#FF6384",
+                        pointBorderColor: "#fff",
+                        pointBorderWidth: 2,
+                        borderWidth: 3
                     },
                     {
                         label: "Humidity (%)",
-                        borderColor: "#4ECDC4",
-                        backgroundColor: "rgba(78, 205, 196, 0.1)",
+                        borderColor: "#36A2EB",
+                        backgroundColor: "rgba(54, 162, 235, 0.1)",
                         data: [],
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 2,
-                        borderWidth: 1,
-                        pointBackgroundColor: "#4ECDC4",
-                        pointBorderColor: "#4ECDC4",
-                        pointBorderWidth: 0
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: "#36A2EB",
+                        pointBorderColor: "#fff",
+                        pointBorderWidth: 2,
+                        borderWidth: 3
                     }
                 ]
             },
@@ -120,74 +127,215 @@
                             stepSize: 5,
                             displayFormats: {
                                 minute: 'HH:mm'
+                            },
+                            tooltipFormat: 'MMM D, HH:mm'
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                            color: '#666',
+                            font: {
+                                size: 12
+                            },
+                            source: 'data',
+                            autoSkip: false
+                        },
+                        grid: {
+                            color: "rgba(0,0,0,0.05)",
+                            drawBorder: false
+                        },
+                        title: {
+                            display: true,
+                            text: "Time",
+                            color: '#666',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            color: '#666',
+                            font: {
+                                size: 12
                             }
                         },
                         grid: {
                             color: "rgba(0,0,0,0.05)",
                             drawBorder: false
-                        }
-                    },
-                    y: {
-                        beginAtZero: false,
-                        grid: {
-                            color: "rgba(0,0,0,0.05)",
-                            drawBorder: false
+                        },
+                        title: {
+                            display: true,
+                            text: "Value",
+                            color: '#666',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         }
                     }
                 },
                 plugins: {
                     legend: {
                         labels: {
-                            boxWidth: 15,
-                            padding: 15
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
                         }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#666',
+                        bodyColor: '#666',
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        padding: 12,
+                        borderColor: 'rgba(0,0,0,0.1)',
+                        borderWidth: 1,
+                        displayColors: true,
+                        intersect: false,
+                        mode: 'index'
                     }
                 }
             }
         });
-
+        // Function to fetch all historical data initially
         function fetchInitialGraphData() {
             fetch("http://localhost:3000/data")
                 .then(response => response.json())
                 .then(data => {
                     if (data.length === 0) return;
-                    data.forEach(entry => {
-                        chart.data.labels.push(new Date(entry.timestamp));
-                        chart.data.datasets[0].data.push({ x: new Date(entry.timestamp), y: entry.temperature });
-                        chart.data.datasets[1].data.push({ x: new Date(entry.timestamp), y: entry.humidity });
+
+                    // Clear existing data
+                    chart.data.labels = [];
+                    chart.data.datasets[0].data = [];
+                    chart.data.datasets[1].data = [];
+
+                    // Calculate timestamps starting from current minute
+                    const currentTime = new Date();
+                    // Set to current minute, clear seconds and milliseconds
+                    currentTime.setSeconds(0);
+                    currentTime.setMilliseconds(0);
+
+                    const timePoints = [];
+                    // Start from 45 minutes ago to include current minute
+                    for (let i = 45; i >= 0; i -= 5) {
+                        const timestamp = new Date(currentTime - i * 60000);
+                        timePoints.push(timestamp);
+                    }
+
+                    // Find the closest data points to our desired timestamps
+                    timePoints.forEach(targetTime => {
+                        // Find the closest data point to this target time
+                        let closestPoint = data[0];
+                        let smallestDiff = Math.abs(new Date(data[0].timestamp) - targetTime);
+
+                        data.forEach(point => {
+                            const diff = Math.abs(new Date(point.timestamp) - targetTime);
+                            if (diff < smallestDiff) {
+                                smallestDiff = diff;
+                                closestPoint = point;
+                            }
+                        });
+
+                        // Only add the point if it's within 2.5 minutes of our target time
+                        if (smallestDiff <= 150000) { // 2.5 minutes in milliseconds
+                            chart.data.labels.push(targetTime);
+                            chart.data.datasets[0].data.push({
+                                x: targetTime,
+                                y: closestPoint.temperature
+                            });
+                            chart.data.datasets[1].data.push({
+                                x: targetTime,
+                                y: closestPoint.humidity
+                            });
+                        }
                     });
+
                     chart.update();
                 })
                 .catch(error => console.error("Error fetching initial graph data:", error));
         }
-
+        // Function to fetch new data every 5 minutes and update graph
         function fetchGraphData() {
-            fetch("http://localhost:3000/latest")
+            fetch("http://localhost:3000/data")
                 .then(response => response.json())
                 .then(data => {
-                    if (data.temperature !== lastTemp || data.humidity !== lastHumidity) {
-                        const timestamp = new Date();
-                        chart.data.labels.push(timestamp);
-                        chart.data.datasets[0].data.push({ x: timestamp, y: data.temperature });
-                        chart.data.datasets[1].data.push({ x: timestamp, y: data.humidity });
+                    if (data.length === 0) return;
 
-                        if (chart.data.labels.length > 100) {
-                            chart.data.labels.shift();
-                            chart.data.datasets[0].data.shift();
-                            chart.data.datasets[1].data.shift();
+                    // Clear existing data
+                    chart.data.labels = [];
+                    chart.data.datasets[0].data = [];
+                    chart.data.datasets[1].data = [];
+
+                    // Calculate timestamps starting from current minute
+                    const currentTime = new Date();
+                    // Set to current minute, clear seconds and milliseconds
+                    currentTime.setSeconds(0);
+                    currentTime.setMilliseconds(0);
+
+                    const timePoints = [];
+                    // Start from 45 minutes ago to include current minute
+                    for (let i = 45; i >= 0; i -= 5) {
+                        const timestamp = new Date(currentTime - i * 60000);
+                        timePoints.push(timestamp);
+                    }
+
+                    // Find the closest data points to our desired timestamps
+                    timePoints.forEach(targetTime => {
+                        // Find the closest data point to this target time
+                        let closestPoint = data[0];
+                        let smallestDiff = Math.abs(new Date(data[0].timestamp) - targetTime);
+
+                        data.forEach(point => {
+                            const diff = Math.abs(new Date(point.timestamp) - targetTime);
+                            if (diff < smallestDiff) {
+                                smallestDiff = diff;
+                                closestPoint = point;
+                            }
+                        });
+
+                        // Only add the point if it's within 2.5 minutes of our target time
+                        if (smallestDiff <= 150000) { // 2.5 minutes in milliseconds
+                            chart.data.labels.push(targetTime);
+                            chart.data.datasets[0].data.push({
+                                x: targetTime,
+                                y: closestPoint.temperature
+                            });
+                            chart.data.datasets[1].data.push({
+                                x: targetTime,
+                                y: closestPoint.humidity
+                            });
                         }
-                        chart.update();
-                        lastTemp = data.temperature;
-                        lastHumidity = data.humidity;
+                    });
+
+                    chart.update(); // Update the graph with the latest data
+
+                    // Update last known data with the most recent point
+                    if (data.length > 0) {
+                        const latestPoint = data[data.length - 1];
+                        lastTemp = latestPoint.temperature;
+                        lastHumidity = latestPoint.humidity;
                     }
                 })
                 .catch(error => console.error("Error fetching graph data:", error));
         }
-
-        setInterval(updateLatestData, 2000);
-        setInterval(fetchGraphData, 300000);
-        updateLatestData();
-        fetchInitialGraphData();
+        // Set intervals
+        setInterval(updateLatestData, 2000); // Fetch latest data every 2 seconds for real-time updates
+        setInterval(fetchGraphData, 300000); // Fetch and update graph data every 5 minutes
+        // Initial fetch
+        updateLatestData(); // To fetch the latest data immediately
+        fetchInitialGraphData(); // To fetch and display the historical data initially
     </script>
 </body>
 </html>
