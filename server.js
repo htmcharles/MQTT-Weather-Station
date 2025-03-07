@@ -67,12 +67,12 @@ app.get("/latest", (req, res) => {
 app.get("/data", (req, res) => {
     db.all(
         `SELECT
-            id,
-            datetime(timestamp, 'localtime') as timestamp,
-            temperature,
-            humidity
+            strftime('%Y-%m-%d %H:%M:00', datetime(timestamp, 'localtime')) as timestamp,
+            ROUND(AVG(temperature), 1) as temperature,
+            ROUND(AVG(humidity), 1) as humidity
         FROM sensor_data
         WHERE timestamp >= datetime('now', '-1 hour')
+        GROUP BY strftime('%Y-%m-%d %H:%M:00', datetime(timestamp, 'localtime'))
         ORDER BY timestamp DESC`,
         (err, rows) => {
             if (err) {
