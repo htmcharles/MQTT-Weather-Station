@@ -66,7 +66,14 @@ app.get("/latest", (req, res) => {
 // API to get last 1 hour of data for graph
 app.get("/data", (req, res) => {
     db.all(
-        `SELECT * FROM sensor_data WHERE timestamp >= datetime('now', '-1 hour')`,
+        `SELECT
+            id,
+            datetime(timestamp, 'localtime') as timestamp,
+            temperature,
+            humidity
+        FROM sensor_data
+        WHERE timestamp >= datetime('now', '-1 hour')
+        ORDER BY timestamp DESC`,
         (err, rows) => {
             if (err) {
                 res.status(500).json({ error: err.message });
