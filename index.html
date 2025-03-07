@@ -30,16 +30,6 @@
             font-size: 22px;
             font-weight: bold;
             color: #333;
-            transition: color 0.3s ease;
-        }
-        .data.updated {
-            color: #007BFF;
-            animation: blink 1s ease;
-        }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
         }
         .chart-container {
             width: 90%;
@@ -62,37 +52,19 @@
         <p>Temperature: <span id="temp" class="data">--</span> °C</p>
         <p>Humidity: <span id="humidity" class="data">--</span> %</p>
     </div>
-
     <div class="chart-container">
         <canvas id="chart"></canvas>
     </div>
-
     <script>
         let lastTemp = null;
         let lastHumidity = null;
-        const timeIntervals = [];  // Array to hold the time intervals (e.g., [current_time, current_time-5, ..., current_time-50])
-        const tempData = []; // Array to hold temperature data
-        const humidityData = []; // Array to hold humidity data
 
         function updateLatestData() {
             fetch("http://localhost:3000/latest")
                 .then(response => response.json())
                 .then(data => {
-                    const tempElement = document.getElementById("temp");
-                    const humidityElement = document.getElementById("humidity");
-
-                    // Only update and blink if values have changed
-                    if (tempElement.innerText !== data.temperature.toString()) {
-                        tempElement.innerText = data.temperature !== null ? data.temperature : "--";
-                        tempElement.classList.add('updated');
-                        setTimeout(() => tempElement.classList.remove('updated'), 1000);
-                    }
-
-                    if (humidityElement.innerText !== data.humidity.toString()) {
-                        humidityElement.innerText = data.humidity !== null ? data.humidity : "--";
-                        humidityElement.classList.add('updated');
-                        setTimeout(() => humidityElement.classList.remove('updated'), 1000);
-                    }
+                    document.getElementById("temp").innerText = data.temperature !== null ? data.temperature : "--";
+                    document.getElementById("humidity").innerText = data.humidity !== null ? data.humidity : "--";
                 })
                 .catch(error => console.error("Error fetching latest data:", error));
         }
@@ -101,33 +73,35 @@
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: timeIntervals,
+                labels: [],
                 datasets: [
                     {
                         label: "Temperature (°C)",
                         borderColor: "#FF6B6B",
                         backgroundColor: "rgba(255, 107, 107, 0.1)",
-                        data: tempData,
+                        data: [],
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 4,
-                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 2,
+                        borderWidth: 1,
                         pointBackgroundColor: "#FF6B6B",
-                        pointBorderColor: "#fff",
-                        pointBorderWidth: 2
+                        pointBorderColor: "#FF6B6B",
+                        pointBorderWidth: 0
                     },
                     {
                         label: "Humidity (%)",
                         borderColor: "#4ECDC4",
                         backgroundColor: "rgba(78, 205, 196, 0.1)",
-                        data: humidityData,
+                        data: [],
                         fill: true,
                         tension: 0.4,
-                        pointRadius: 4,
-                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 2,
+                        borderWidth: 1,
                         pointBackgroundColor: "#4ECDC4",
-                        pointBorderColor: "#fff",
-                        pointBorderWidth: 2
+                        pointBorderColor: "#4ECDC4",
+                        pointBorderWidth: 0
                     }
                 ]
             },
@@ -146,196 +120,74 @@
                             stepSize: 5,
                             displayFormats: {
                                 minute: 'HH:mm'
-                            },
-                            round: 'minute'
-                        },
-                        title: {
-                            display: true,
-                            text: "Time",
-                            font: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            padding: 10
-                        },
-                        grid: {
-                            color: "rgba(0,0,0,0.05)",
-                            drawBorder: false,
-                            offset: false
-                        },
-                        ticks: {
-                            source: 'data',
-                            autoSkip: false,
-                            maxRotation: 45,
-                            font: {
-                                size: 12
-                            },
-                            major: {
-                                enabled: true
-                            },
-                            callback: function(value) {
-                                const date = new Date(value);
-                                if (date.getMinutes() % 5 === 0) {
-                                    return date.getHours().toString().padStart(2, '0') + ':' +
-                                           date.getMinutes().toString().padStart(2, '0');
-                                }
-                                return '';
                             }
-                        },
-                        offset: true,
-                        distribution: 'linear',
-                        bounds: 'ticks'
-                    },
-                    y: {
-                        beginAtZero: false,
-                        title: {
-                            display: true,
-                            text: "Value",
-                            font: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            padding: 10
                         },
                         grid: {
                             color: "rgba(0,0,0,0.05)",
                             drawBorder: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 12
-                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: "rgba(0,0,0,0.05)",
+                            drawBorder: false
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        position: 'top',
                         labels: {
-                            font: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            padding: 20,
-                            usePointStyle: true,
-                            pointStyle: 'circle'
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        titleColor: '#333',
-                        bodyColor: '#666',
-                        borderColor: '#ddd',
-                        borderWidth: 1,
-                        padding: 10,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y.toFixed(1);
-                                }
-                                return label;
-                            }
+                            boxWidth: 15,
+                            padding: 15
                         }
                     }
-                },
-                animation: {
-                    duration: 0
                 }
             }
         });
 
-        function fetchGraphData() {
+        function fetchInitialGraphData() {
             fetch("http://localhost:3000/data")
                 .then(response => response.json())
                 .then(data => {
                     if (data.length === 0) return;
-
-                    const currentTime = new Date();
-                    // Round down to nearest 5 minutes
-                    currentTime.setMilliseconds(0);
-                    currentTime.setSeconds(0);
-                    currentTime.setMinutes(Math.floor(currentTime.getMinutes() / 5) * 5);
-
-                    // Clear existing data
-                    timeIntervals.length = 0;
-                    tempData.length = 0;
-                    humidityData.length = 0;
-
-                    // Create array of evenly spaced time intervals
-                    const endTime = currentTime;
-                    // Start 40 minutes back (8 intervals of 5 minutes)
-                    const startTime = new Date(endTime.getTime() - (8 * 5 * 60000));
-                    startTime.setMinutes(Math.floor(startTime.getMinutes() / 5) * 5);
-
-                    // Generate exactly 10 points at 5-minute intervals
-                    for (let i = 0; i < 10; i++) {
-                        const intervalTime = new Date(startTime.getTime() + (i * 5 * 60000));
-                        timeIntervals.push(intervalTime);
-                    }
-
-                    // Process data for each interval
-                    timeIntervals.forEach((time, index) => {
-                        if (index === timeIntervals.length - 1) {
-                            // Future point is always null
-                            tempData.push(null);
-                            humidityData.push(null);
-                            return;
-                        }
-
-                        const intervalStart = time;
-                        const intervalEnd = new Date(time.getTime() + 300000);
-                        const intervalData = data.filter(entry => {
-                            const entryTime = new Date(entry.timestamp);
-                            return entryTime >= intervalStart && entryTime < intervalEnd;
-                        });
-
-                        if (intervalData.length > 0) {
-                            // Calculate averages for this interval
-                            const avgTemp = intervalData.reduce((sum, entry) => sum + entry.temperature, 0) / intervalData.length;
-                            const avgHumid = intervalData.reduce((sum, entry) => sum + entry.humidity, 0) / intervalData.length;
-                            tempData.push(Number(avgTemp.toFixed(1)));
-                            humidityData.push(Number(avgHumid.toFixed(1)));
-                        } else if (index === 8) {
-                            // Current time point (9th position), use latest data if no average available
-                            tempData.push(data[0].temperature);
-                            humidityData.push(data[0].humidity);
-                        } else {
-                            // No data for this interval
-                            tempData.push(null);
-                            humidityData.push(null);
-                        }
+                    data.forEach(entry => {
+                        chart.data.labels.push(new Date(entry.timestamp));
+                        chart.data.datasets[0].data.push({ x: new Date(entry.timestamp), y: entry.temperature });
+                        chart.data.datasets[1].data.push({ x: new Date(entry.timestamp), y: entry.humidity });
                     });
-
-                    // Ensure x-axis bounds are exactly on 5-minute intervals
-                    chart.options.scales.x.min = timeIntervals[0];
-                    chart.options.scales.x.max = timeIntervals[timeIntervals.length - 1];
-                    chart.update('none');
+                    chart.update();
                 })
-                .catch(error => console.error("Error fetching data:", error));
+                .catch(error => console.error("Error fetching initial graph data:", error));
         }
 
-        // Update display data more frequently (every 5 seconds)
-        setInterval(updateLatestData, 5000);
+        function fetchGraphData() {
+            fetch("http://localhost:3000/latest")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.temperature !== lastTemp || data.humidity !== lastHumidity) {
+                        const timestamp = new Date();
+                        chart.data.labels.push(timestamp);
+                        chart.data.datasets[0].data.push({ x: timestamp, y: data.temperature });
+                        chart.data.datasets[1].data.push({ x: timestamp, y: data.humidity });
 
-        // Update graph data every 5 minutes, aligned to 5-minute intervals
-        function scheduleNextUpdate() {
-            const now = new Date();
-            const delay = (5 - (now.getMinutes() % 5)) * 60000 - (now.getSeconds() * 1000) - now.getMilliseconds();
-            setTimeout(() => {
-                fetchGraphData();
-                setInterval(fetchGraphData, 300000);
-            }, delay);
+                        if (chart.data.labels.length > 100) {
+                            chart.data.labels.shift();
+                            chart.data.datasets[0].data.shift();
+                            chart.data.datasets[1].data.shift();
+                        }
+                        chart.update();
+                        lastTemp = data.temperature;
+                        lastHumidity = data.humidity;
+                    }
+                })
+                .catch(error => console.error("Error fetching graph data:", error));
         }
 
-        // Initialize the data
+        setInterval(updateLatestData, 2000);
+        setInterval(fetchGraphData, 300000);
         updateLatestData();
-        fetchGraphData();
-        scheduleNextUpdate();
+        fetchInitialGraphData();
     </script>
 </body>
 </html>
