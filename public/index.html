@@ -660,12 +660,27 @@
                 animateValue(tempElement, currentTemp, value, 1000);
                 updateChartRealTime(timestamp, value, humidityData[humidityData.length - 1]);
                 updateAverages('temperature', value);
+
+                // Store temperature data
+                axios.post('/api/weather/data', {
+                    type: 'temperature',
+                    value: value,
+                    timestamp: timestamp
+                }).catch(error => console.error('Error storing temperature:', error));
+
             } else if (topic === "/work_group_01/room_temp/humidity") {
                 const humidityElement = document.getElementById("humidity");
                 const currentHumidity = parseFloat(humidityElement.innerText) || 0;
                 animateValue(humidityElement, currentHumidity, value, 1000);
                 updateChartRealTime(timestamp, temperatureData[temperatureData.length - 1], value);
                 updateAverages('humidity', value);
+
+                // Store humidity data
+                axios.post('/api/weather/data', {
+                    type: 'humidity',
+                    value: value,
+                    timestamp: timestamp
+                }).catch(error => console.error('Error storing humidity:', error));
             }
         });
 
