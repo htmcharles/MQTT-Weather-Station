@@ -491,7 +491,7 @@
 
         // Rolling window settings
         const TIME_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
-        const NUMBER_OF_LABELS = 5; // Show 5 time labels on x-axis
+        const NUMBER_OF_LABELS = 10; // Show 10 time labels on x-axis
         let temperatureData = [];
         let humidityData = [];
         let dataTimestamps = [];
@@ -551,7 +551,7 @@
             // Calculate the last complete 5-minute interval
             const lastInterval = new Date(Math.floor(now.getTime() / TIME_INTERVAL) * TIME_INTERVAL);
 
-            // Add first 4 labels at 5-minute intervals
+            // Add first 9 labels at 5-minute intervals
             for (let i = NUMBER_OF_LABELS - 2; i >= 0; i--) {
                 const time = new Date(lastInterval - (i * TIME_INTERVAL));
                 displayLabels.push(time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -576,7 +576,7 @@
             if (temperature !== null) temperatureData.push(temperature);
             if (humidity !== null) humidityData.push(humidity);
 
-            // Keep only last 20 minutes of data
+            // Keep only last 45 minutes of data (9 intervals of 5 minutes plus current time)
             const cutoffTime = now.getTime() - (TIME_INTERVAL * (NUMBER_OF_LABELS - 1));
             const cutoffIndex = dataTimestamps.findIndex(time => time.getTime() >= cutoffTime);
 
@@ -626,6 +626,7 @@
                         );
                         return displayLabels[labelIndex] || '';
                     },
+                    count: NUMBER_OF_LABELS, // Ensure we show exactly 10 ticks
                     maxTicksLimit: NUMBER_OF_LABELS,
                     font: {
                         size: 11

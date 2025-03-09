@@ -2,6 +2,8 @@
 
 This application collects temperature and humidity data from an MQTT broker, stores it in an SQLite database, and visualizes it with real-time updates and 5-minute averages.
 
+![Weather Station Dashboard](screenshot.png)
+
 ## Features
 
 - 🌡️ Real-time temperature and humidity monitoring
@@ -46,13 +48,13 @@ This application collects temperature and humidity data from an MQTT broker, sto
 ## Project Structure
 
 ```
-mqtt-weather-app/
+mqtt-weather-app
 ├── public/
-│   └── index.html       # Frontend interface with Chart.js visualization
+│   └── index.html        # Frontend interface with Chart.js visualization
 ├── server.js            # Express backend with API endpoints and SQLite logic
-├── package.json         # Node.js dependencies
-├── weather_data.db      # SQLite database (created automatically)
-└── README.md            # Setup instructions
+├── package.json        # Node.js dependencies
+├── weather_data.db    # SQLite database (created automatically)
+└── README.md         # Setup instructions
 ```
 
 ## How It Works
@@ -64,8 +66,8 @@ mqtt-weather-app/
 
 ## API Endpoints
 
-- `POST /api/weather/data` - Store raw temperature and humidity readings
-- `GET /api/weather/history` - Retrieve historical data for charting
+- POST `/api/weather/data` - Store raw temperature and humidity readings
+- GET `/api/weather/history` - Retrieve historical data for charting
 
 ## Database Schema
 
@@ -74,9 +76,9 @@ Stores every reading received from MQTT:
 ```sql
 CREATE TABLE raw_data (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  type TEXT NOT NULL,        -- 'temperature' or 'humidity'
-  value REAL NOT NULL,       -- The actual reading
-  timestamp TEXT NOT NULL    -- ISO format timestamp
+  type TEXT NOT NULL,      -- 'temperature' or 'humidity'
+  value REAL NOT NULL,     -- The actual reading
+  timestamp TEXT NOT NULL  -- ISO format timestamp
 );
 ```
 
@@ -85,11 +87,8 @@ Stores 5-minute averages:
 ```sql
 CREATE TABLE avg_data (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  avg_temperature REAL,      -- 5-minute average temperature
-  avg_humidity REAL,         -- 5-minute average humidity
-  timestamp TEXT NOT NULL    -- ISO format timestamp
+  avg_temperature REAL,    -- 5-minute average temperature
+  avg_humidity REAL,       -- 5-minute average humidity
+  timestamp TEXT NOT NULL  -- ISO format timestamp
 );
-#### RUN THE FOLLOWING  TO THE TERMINAL 
-
-1.Navigate to the directory
-2.Run   node server.js   or   http://localhost:3000/"# Embeded" 
+```
