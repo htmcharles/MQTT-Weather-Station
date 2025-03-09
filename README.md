@@ -28,7 +28,7 @@ This application collects temperature and humidity data from an MQTT broker, sto
 
 2. Install dependencies:
    ```bash
-   npm install
+   npm install express sqlite3 body-parser
    ```
 
 3. Create a `public` directory and place the `index.html` file inside:
@@ -39,11 +39,31 @@ This application collects temperature and humidity data from an MQTT broker, sto
 
 4. Start the server:
    ```bash
-   npm start
+   node server.js
    ```
 
 5. Access the application:
-   Open your browser and navigate to `http://localhost:3000`
+   - Open your browser and navigate to `http://localhost:3000`
+   - Note: If you open index.html directly (file://), it will automatically redirect to http://localhost:3000
+
+### Viewing Data
+
+The application provides several ways to view your data:
+
+1. Main Dashboard (`http://localhost:3000`):
+   - Real-time temperature and humidity values
+   - Interactive chart with historical data
+   - 5-minute averages
+
+2. Database Viewers:
+   - Raw Data: `http://localhost:3000/db-viewer/raw-data`
+   - Averaged Data: `http://localhost:3000/db-viewer/avg-data`
+
+### Important Notes
+
+- The server must be running for the application to work properly
+- Historical data is only available when accessing through `http://localhost:3000`
+- The database viewers auto-refresh every 30 seconds
 
 ## Project Structure
 
@@ -67,7 +87,8 @@ mqtt-weather-app
 ## API Endpoints
 
 - POST `/api/weather/data` - Store raw temperature and humidity readings
-- GET `/api/weather/history` - Retrieve historical data for charting
+- GET `/api/weather/historical` - Retrieve historical data for charting
+- GET `/api/weather/history` - Retrieve averaged historical data
 
 ## Database Schema
 
@@ -75,20 +96,28 @@ mqtt-weather-app
 Stores every reading received from MQTT:
 ```sql
 CREATE TABLE raw_data (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  type TEXT NOT NULL,      -- 'temperature' or 'humidity'
-  value REAL NOT NULL,     -- The actual reading
-  timestamp TEXT NOT NULL  -- ISO format timestamp
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    value REAL NOT NULL,
+    timestamp TEXT NOT NULL
 );
 ```
 
-### Average Data Table
+### Averaged Data Table
 Stores 5-minute averages:
 ```sql
 CREATE TABLE avg_data (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  avg_temperature REAL,    -- 5-minute average temperature
-  avg_humidity REAL,       -- 5-minute average humidity
-  timestamp TEXT NOT NULL  -- ISO format timestamp
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    avg_temperature REAL,
+    avg_humidity REAL,
+    timestamp TEXT NOT NULL
 );
 ```
+
+## Troubleshooting
+
+If you're not seeing historical data:
+1. Ensure the server is running (`node server.js`)
+2. Access the application through `http://localhost:3000`
+3. Check the database viewers to verify data is being stored
+4. Check browser console (F12) for any error messages

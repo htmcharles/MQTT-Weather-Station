@@ -191,14 +191,114 @@ app.get('/db-viewer', (req, res) => {
     <html>
     <head>
       <title>SQLite Database Viewer</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1, h2 { color: #333; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .container { max-width: 1200px; margin: 0 auto; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        :root {
+          --primary-color: #FFB84D;
+          --secondary-color: #006B5F;
+          --accent-color: #FFB84D;
+          --bg-dark: #006B5F;
+          --bg-card: #006B5F;
+          --text-primary: #F8FAFC;
+          --text-secondary: #B4CCC9;
+          --border-color: rgba(180, 204, 201, 0.1);
+          --shadow-color: rgba(0, 0, 0, 0.3);
+          --gradient-1: linear-gradient(135deg, #FFB84D, #F59E0B);
+          --gradient-2: linear-gradient(135deg, #FFB84D, #F59E0B);
+          --card-hover: #007D6F;
+        }
+
+        body {
+          font-family: 'Inter', sans-serif;
+          background-color: var(--bg-dark);
+          color: var(--text-primary);
+          margin: 20px;
+        }
+
+        h1, h2 {
+          color: var(--text-primary);
+          font-weight: 600;
+        }
+
+        h1 {
+          font-size: 2.5rem;
+          background: var(--gradient-1);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 0.5rem;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+        }
+
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-bottom: 30px;
+          background: var(--bg-card);
+          border-radius: 1rem;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          border: 1px solid var(--border-color);
+        }
+
+        th, td {
+          border: 1px solid var(--border-color);
+          padding: 12px;
+          text-align: left;
+          color: var(--text-primary);
+        }
+
+        th {
+          background-color: rgba(255, 255, 255, 0.1);
+          font-weight: 500;
+          color: var(--primary-color);
+        }
+
+        tr:nth-child(even) {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+          background-color: var(--card-hover);
+        }
+
+        a {
+          color: var(--primary-color);
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        a:hover {
+          color: var(--accent-color);
+        }
+
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+
+        li {
+          margin: 10px 0;
+          padding: 10px;
+          background: var(--bg-card);
+          border-radius: 8px;
+          border: 1px solid var(--border-color);
+          transition: transform 0.3s ease;
+        }
+
+        li:hover {
+          transform: translateX(10px);
+          background: var(--card-hover);
+        }
+
+        p {
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+        }
       </style>
     </head>
     <body>
@@ -228,15 +328,95 @@ app.get('/db-viewer/raw-data', (req, res) => {
     <html>
     <head>
       <title>raw_data Table</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1, h2 { color: #333; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .nav { margin-bottom: 20px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        :root {
+          --primary-color: #FFB84D;
+          --secondary-color: #006B5F;
+          --accent-color: #FFB84D;
+          --bg-dark: #006B5F;
+          --bg-card: #006B5F;
+          --text-primary: #F8FAFC;
+          --text-secondary: #B4CCC9;
+          --border-color: rgba(180, 204, 201, 0.1);
+          --shadow-color: rgba(0, 0, 0, 0.3);
+          --gradient-1: linear-gradient(135deg, #FFB84D, #F59E0B);
+          --gradient-2: linear-gradient(135deg, #FFB84D, #F59E0B);
+          --card-hover: #007D6F;
+        }
+
+        body {
+          font-family: 'Inter', sans-serif;
+          background-color: var(--bg-dark);
+          color: var(--text-primary);
+          margin: 20px;
+        }
+
+        h1 {
+          font-size: 2.5rem;
+          font-weight: 600;
+          background: var(--gradient-1);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 0.5rem;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+        }
+
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-bottom: 30px;
+          background: var(--bg-card);
+          border-radius: 1rem;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          border: 1px solid var(--border-color);
+        }
+
+        th, td {
+          border: 1px solid var(--border-color);
+          padding: 12px;
+          text-align: left;
+          color: var(--text-primary);
+        }
+
+        th {
+          background-color: rgba(255, 255, 255, 0.1);
+          font-weight: 500;
+          color: var(--primary-color);
+        }
+
+        tr:nth-child(even) {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+          background-color: var(--card-hover);
+        }
+
+        .nav {
+          margin-bottom: 20px;
+        }
+
+        a {
+          color: var(--primary-color);
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        a:hover {
+          color: var(--accent-color);
+        }
+
+        p {
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+        }
       </style>
       <meta http-equiv="refresh" content="30"> <!-- Auto-refresh page every 30 seconds -->
     </head>
@@ -297,15 +477,95 @@ app.get('/db-viewer/avg-data', (req, res) => {
     <html>
     <head>
       <title>avg_data Table</title>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
       <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1, h2 { color: #333; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .nav { margin-bottom: 20px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        :root {
+          --primary-color: #FFB84D;
+          --secondary-color: #006B5F;
+          --accent-color: #FFB84D;
+          --bg-dark: #006B5F;
+          --bg-card: #006B5F;
+          --text-primary: #F8FAFC;
+          --text-secondary: #B4CCC9;
+          --border-color: rgba(180, 204, 201, 0.1);
+          --shadow-color: rgba(0, 0, 0, 0.3);
+          --gradient-1: linear-gradient(135deg, #FFB84D, #F59E0B);
+          --gradient-2: linear-gradient(135deg, #FFB84D, #F59E0B);
+          --card-hover: #007D6F;
+        }
+
+        body {
+          font-family: 'Inter', sans-serif;
+          background-color: var(--bg-dark);
+          color: var(--text-primary);
+          margin: 20px;
+        }
+
+        h1 {
+          font-size: 2.5rem;
+          font-weight: 600;
+          background: var(--gradient-1);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 0.5rem;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 2rem;
+        }
+
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-bottom: 30px;
+          background: var(--bg-card);
+          border-radius: 1rem;
+          box-shadow: 0 8px 32px var(--shadow-color);
+          border: 1px solid var(--border-color);
+        }
+
+        th, td {
+          border: 1px solid var(--border-color);
+          padding: 12px;
+          text-align: left;
+          color: var(--text-primary);
+        }
+
+        th {
+          background-color: rgba(255, 255, 255, 0.1);
+          font-weight: 500;
+          color: var(--primary-color);
+        }
+
+        tr:nth-child(even) {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+          background-color: var(--card-hover);
+        }
+
+        .nav {
+          margin-bottom: 20px;
+        }
+
+        a {
+          color: var(--primary-color);
+          text-decoration: none;
+          transition: color 0.3s ease;
+        }
+
+        a:hover {
+          color: var(--accent-color);
+        }
+
+        p {
+          color: var(--text-secondary);
+          margin-bottom: 20px;
+        }
       </style>
       <meta http-equiv="refresh" content="30"> <!-- Auto-refresh page every 30 seconds -->
     </head>
