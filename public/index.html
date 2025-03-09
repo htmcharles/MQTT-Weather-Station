@@ -10,20 +10,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
-        :root {
-            --primary-color: #6366F1;
-            --secondary-color: #22C55E;
-            --accent-color: #F59E0B;
-            --bg-dark: #1E293B;
-            --bg-card: #334155;
-            --text-primary: #F8FAFC;
-            --text-secondary: #CBD5E1;
-            --border-color: rgba(248, 250, 252, 0.1);
-            --shadow-color: rgba(30, 41, 59, 0.4);
-            --gradient-1: linear-gradient(135deg, #6366F1, #8B5CF6);
-            --gradient-2: linear-gradient(135deg, #22C55E, #10B981);
-        }
+    :root {
+        --primary-color: #FFB84D;
+        --secondary-color: #006B5F;
+        --accent-color: #FFB84D;
+        --bg-dark: #006B5F;
+        --bg-card: #006B5F;
+        --text-primary: #F8FAFC;
+        --text-secondary: #B4CCC9;
+        --border-color: rgba(180, 204, 201, 0.1);
+        --shadow-color: rgba(0, 0, 0, 0.3);
+        --gradient-1: linear-gradient(135deg, #FFB84D, #F59E0B);
+        --gradient-2: linear-gradient(135deg, #FFB84D, #F59E0B);
+        --card-hover: #007D6F;
+    }
 
         * {
             margin: 0;
@@ -42,13 +42,12 @@
         .dashboard {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0 2rem;
         }
 
         .title-section {
             text-align: center;
-            margin-bottom: 3rem;
-            padding: 2rem 0;
+            margin-bottom: 1rem;
         }
 
         .title-section h1 {
@@ -86,7 +85,7 @@
 
         .metrics-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
         }
 
@@ -98,25 +97,6 @@
             overflow: hidden;
             border: 1px solid var(--border-color);
             transition: all 0.3s ease;
-        }
-
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.1;
-            z-index: 0;
-        }
-
-        .metric-card.temperature::before {
-            background: var(--gradient-1);
-        }
-
-        .metric-card.humidity::before {
-            background: var(--gradient-2);
         }
 
         .metric-card:hover {
@@ -280,7 +260,6 @@
             }
 
             .title-section {
-                margin-bottom: 2rem;
                 padding: 1rem 0;
             }
 
@@ -329,27 +308,6 @@
         </div>
 
         <div class="main-container">
-            <div class="glass-panel">
-                <div class="chart-section">
-                    <h2 class="section-title">Environmental Trends</h2>
-                    <div class="chart-container">
-                        <canvas id="weatherChart"></canvas>
-                    </div>
-
-                    <div class="status-section">
-                        <div class="status-item">
-                            <div id="db-pulse" class="pulse"></div>
-                            <i class="fas fa-database status-icon"></i>
-                            Database: <span id="db-status" class="status-value">Waiting for data...</span>
-                        </div>
-                        <div class="status-item">
-                            <i class="fas fa-sync-alt status-icon"></i>
-                            Last update: <span id="last-update" class="status-value">--</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="metrics-container">
                 <div class="metric-card temperature">
                     <div class="metric-label">Temperature</div>
@@ -370,6 +328,27 @@
                     </div>
                     <div class="live-indicator">
                         <div class="live-dot"></div> LIVE
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="chart-section">
+                    <h2 class="section-title">Environmental Trends</h2>
+                    <div class="chart-container">
+                        <canvas id="weatherChart"></canvas>
+                    </div>
+
+                    <div class="status-section">
+                        <div class="status-item">
+                            <div id="db-pulse" class="pulse"></div>
+                            <i class="fas fa-database status-icon"></i>
+                            Database: <span id="db-status" class="status-value">Waiting for data...</span>
+                        </div>
+                        <div class="status-item">
+                            <i class="fas fa-sync-alt status-icon"></i>
+                            Last update: <span id="last-update" class="status-value">--</span>
+                        </div>
                     </div>
                 </div>
             </div>
