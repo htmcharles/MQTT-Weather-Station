@@ -497,6 +497,52 @@
         let dataTimestamps = [];
         let displayLabels = [];
 
+        // Function to load historical data
+        async function loadHistoricalData() {
+            try {
+                const response = await axios.get('/api/weather/historical');
+                const historicalData = response.data;
+
+                // Sort data by timestamp
+                historicalData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                // Separate temperature and humidity data
+                const now = new Date();
+                const cutoffTime = now.getTime() - (TIME_INTERVAL * (NUMBER_OF_LABELS - 1));
+
+                historicalData.forEach(record => {
+                    const timestamp = new Date(record.timestamp);
+                    if (timestamp.getTime() >= cutoffTime) {
+                        if (record.type === 'temperature') {
+                            temperatureData.push(record.value);
+                            dataTimestamps.push(timestamp);
+                        } else if (record.type === 'humidity') {
+                            humidityData.push(record.value);
+                        }
+                    }
+                });
+
+                // Initialize chart with historical data
+                if (temperatureData.length > 0 || humidityData.length > 0) {
+                    updateChartRealTime(
+                        dataTimestamps[dataTimestamps.length - 1].toISOString(),
+                        temperatureData[temperatureData.length - 1],
+                        humidityData[humidityData.length - 1]
+                    );
+                }
+
+                console.log('Historical data loaded successfully');
+            } catch (error) {
+                console.error('Error loading historical data:', error);
+                document.getElementById("db-status").textContent = "Error loading historical data";
+                document.getElementById("db-status").style.color = "#FF3030";
+                document.getElementById("db-pulse").classList.add("error");
+            }
+        }
+
+        // Load historical data when the page loads
+        loadHistoricalData();
+
         // Initialize time labels
         function updateDisplayLabels() {
             const now = new Date();
@@ -523,9 +569,10 @@
         // Function to update chart in real-time
         function updateChartRealTime(timestamp, temperature, humidity) {
             const now = new Date();
+            const newTimestamp = new Date(timestamp);
 
             // Add new data point
-            dataTimestamps.push(new Date(timestamp));
+            dataTimestamps.push(newTimestamp);
             if (temperature !== null) temperatureData.push(temperature);
             if (humidity !== null) humidityData.push(humidity);
 
@@ -539,19 +586,42 @@
                 humidityData = humidityData.slice(cutoffIndex);
             }
 
-            // Update display labels
+            // Update display labels and calculate time boundaries
             displayLabels = updateDisplayLabels();
+            const startTime = now.getTime() - (TIME_INTERVAL * (NUMBER_OF_LABELS - 1));
+            const endTime = now.getTime();
+
+            // Create normalized data arrays for plotting
+            const normalizedData = dataTimestamps.map((time, index) => {
+                const timeValue = time.getTime();
+                // Calculate x-position as percentage between start and end time
+                const xPosition = (timeValue - startTime) / (endTime - startTime);
+                return {
+                    x: xPosition,
+                    temp: temperatureData[index],
+                    humidity: humidityData[index]
+                };
+            });
 
             // Update chart configuration
+            weatherChart.data.datasets[0].data = normalizedData.map(d => ({
+                x: d.x,
+                y: d.temp
+            }));
+            weatherChart.data.datasets[1].data = normalizedData.map(d => ({
+                x: d.x,
+                y: d.humidity
+            }));
+
             weatherChart.options.scales.x = {
-                ...weatherChart.options.scales.x,
+                type: 'linear',
+                min: 0,
+                max: 1,
                 ticks: {
-                    callback: function(val, index) {
-                        // Calculate position in the data array
-                        const position = index / (dataTimestamps.length - 1);
-                        // Map position to label index
+                    callback: function(val) {
+                        // Map the normalized position (0-1) to the appropriate time label
                         const labelIndex = Math.min(
-                            Math.floor(position * (NUMBER_OF_LABELS - 1)),
+                            Math.floor(val * NUMBER_OF_LABELS),
                             NUMBER_OF_LABELS - 1
                         );
                         return displayLabels[labelIndex] || '';
@@ -560,13 +630,19 @@
                     font: {
                         size: 11
                     }
+                },
+                grid: {
+                    color: 'rgba(255, 255, 255, 0.1)',
+                    borderColor: 'rgba(255, 255, 255, 0.2)'
+                },
+                title: {
+                    display: true,
+                    text: 'Time',
+                    font: {
+                        size: 13
+                    }
                 }
             };
-
-            // Update chart data
-            weatherChart.data.labels = dataTimestamps.map(d => d.toLocaleTimeString());
-            weatherChart.data.datasets[0].data = temperatureData;
-            weatherChart.data.datasets[1].data = humidityData;
 
             // Update last update time
             document.getElementById("last-update").innerText = now.toLocaleTimeString();
