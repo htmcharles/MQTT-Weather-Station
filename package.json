@@ -4,7 +4,7 @@
   "description": "Weather Station Dashboard with WebSocket",
   "main": "server.js",
   "scripts": {
-    "start": "node api.js && node server.js"
+    "start": "node init && node server.js"
   },
   "dependencies": {
     "express": "^4.18.2"
